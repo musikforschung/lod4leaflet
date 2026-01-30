@@ -1,0 +1,4 @@
+#lookup.fix
+
+lookup(qid,'./dictionary/lookup.csv')
+mv(qid,gndid)

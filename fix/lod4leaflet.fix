@@ -1,0 +1,168 @@
+#catmandu convert CSV to JSON --line_delimited 1 < gndid.csv > gndid.json
+#cat gndid.json | catmandu convert getJSON --url 'https://hub.culturegraph.org/entityfacts/{gndid}' --fix efacts.fix > efacts.json
+
+#coordinates
+if any_match(location.geometry.type,"Point")
+   copy_field(location.geometry.coordinates.*,tmp.0.$append)
+   reverse(tmp.0)
+   join_field(tmp.0,',')
+   copy_field(tmp.0,result.0)
+   append(result.0,',"')
+else
+   copy_field(@id,tmp.0)
+   replace_all(tmp.0,"https\:\/\/d\-nb\.info\/gnd\/","")
+   lookup(tmp.0,'./dictionary/gndid_coords_dictionary.csv',default: NULL)
+   unless any_match(tmp.0,"NULL")
+      replace_all(tmp.0,"\|",",")
+      copy_field(tmp.0,result.0)
+	  append(result.0,',"')
+  end
+end
+
+select exists(result.0)
+
+##paragraph1
+#preferredName
+copy_field(preferredName,p1_name)
+#dateOfEstablishment
+copy_field(dateOfEstablishment,p1_date.0)
+join_field(p1_date.0,', ')
+#dateOfTermination
+copy_field(dateOfTermination,p1_date.1)
+join_field(p1_date.1,', ')
+if exists(p1_date.0)
+   if exists(p1_date.1)
+      join_field(p1_date,"-")
+   end
+else
+   join_field(p1_date,"")
+end
+#dateOfProduction
+unless exists(p1_date)
+   copy_field(dateOfProduction,p1_date.0)
+   join_field(p1_date.0,"-")
+   copy_field(p1_date.0,p1_date)
+   prepend(p1_date,"erbaut ")
+end
+#associatedCountry
+copy_field(associatedCountry.0.preferredName,p1_addr)
+#merge paragraph1
+if exists(p1_name)
+    copy(p1_name,paragraph1.0.$append)
+    if exists(p1_date)
+	   copy(p1_date,paragraph1.0.$append)
+	   join_field(paragraph1.0," | ")
+    else
+	   join_field(paragraph1.0,"")
+	end
+end
+prepend(paragraph1.0,"<b>")
+append(paragraph1.0,"</b>")
+
+if exists(p1_addr)
+    copy(p1_addr,paragraph1.1)
+end
+#html-tags paragraph1
+join_field(paragraph1,"<br>")
+if exists(paragraph1)
+    prepend(paragraph1,"<p>")
+    append(paragraph1,"</p>")
+end
+
+##paragraph2
+copy(biographicalOrHistoricalInformation,paragraph2)
+prepend(paragraph2,"<p>")
+append(paragraph2,"</p>")
+
+##paragraph3
+#depiction
+copy_field(depiction.thumbnail.@id,p3_img.1)
+set_field(p3_img.0,"<img src=")
+set_field(p3_img.2,">")
+join_field(p3_img)
+##meta
+#creator
+copy(depiction.creator,p3_meta.0,join:', ')
+join_field(p3_meta.0)
+prepend(p3_meta.0,"Urheber*in: ") 
+#source
+copy(depiction.url,p3_meta.1.0)
+#publisher 
+copy(depiction.publisher,p3_meta.1.1)
+if exists(p3_meta.1.0)
+   if exists(p3_meta.1.1)
+      prepend(p3_meta.1.0,"<a href=")
+      prepend(p3_meta.1.1," target=_blank>")
+      append(p3_meta.1.1,"</a>")
+      join_field(p3_meta.1," ")
+   end
+else
+#   move(p3_meta.1.1,p3_meta.1)   
+end
+prepend(p3_meta.1,"Quelle: ") 
+if exists(p3_meta.0)
+   if exists(p3_meta.1)
+	  join_field(p3_meta," | ")
+   end
+end
+#licence
+copy_field(depiction.license.*.@id,p3_lic.0)
+prepend(p3_lic.0,"<a href=")
+copy(depiction.license.*.name,p3_lic.1)
+prepend(p3_lic.1," target=_blank>")
+append(p3_lic.1,"</a>")
+join_field(p3_lic," ")
+
+#img
+if exists(p3_img)
+    copy(p3_img,paragraph3.0)
+end
+if exists(p3_meta)
+    copy(p3_meta,paragraph3.1)
+end
+if exists(p3_lic)
+   copy_field(p3_lic,paragraph3.2)
+end
+#html-tags paragraph3
+join_field(paragraph3,"<br>")
+if exists(paragraph3)
+    prepend(paragraph3,"<p>")
+    append(paragraph3,"</p>")
+end
+
+##paragraph4
+#sameAs
+copy_field(@id,ID)
+replace_all(ID,"https\:\/\/d\-nb\.info\/gnd\/","")
+lookup(ID,'./dictionary/beacon_dictionary.csv')
+copy_field(ID,p4_link.0)
+prepend(p4_link.0,"<a href=https://www.musikbibliographie.de/TTL=1/MAT=/NOMAT=T/REL?PPN=")
+set_field(p4_link.1," target=_blank>Literaturnachweise in BMS online</a>")
+join_field(p4_link,"")
+copy(p4_link,paragraph4)
+
+#merge paragraphs
+copy(paragraph1,final.0)
+copy(paragraph2,final.1)
+copy(paragraph3,final.2)
+copy(paragraph4,final.3)
+
+join_field(final,"")
+
+copy(final,result.2.0)
+replace_all(result.2.0,'"','\\"')
+copy(preferredName,result.2.1)
+prepend(result.2.1,'","')
+append(result.2.1,'",')
+set_field(result.2.2,'"3ec400"')
+join_field(result.2,"")
+
+
+join_field(result,"")
+prepend(result,"[")
+append(result,"],")
+
+move_field(result,tmp)
+vacuum()
+
+retain(tmp)

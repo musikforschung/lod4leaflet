@@ -1,0 +1,16 @@
+#qid.fix
+copy_field(@id,gndid)
+replace_all(gndid,"https?\:\/\/d-nb\.info\/gnd\/",'')
+
+copy_field(sameAs.*.@id,sameAs.$append)
+if is_array(sameAs)
+   do list(path:sameAs,var:var)
+      if any_match(var,"http\:\/\/www\.wikidata.*")
+         copy(var,qid)
+		 replace_all(qid,"https?\:\/\/www\.wikidata\.org\/entity\/",'')
+      end
+   end
+
+end
+retain(gndid,qid)
+select exists(qid)

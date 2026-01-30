@@ -1,0 +1,119 @@
+  <!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>lod4leaflet</title>
+
+	<link rel="stylesheet" href="./leaflet/lib/mapbox.css" />
+	<script src="./leaflet/lib/mapbox.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+   	<link rel="stylesheet" href="./leaflet/dist/MarkerCluster.css" />
+	<link rel="stylesheet" href="./leaflet/dist/MarkerCluster.Default.css" />
+	<script src="./leaflet/dist/leaflet.markercluster-src.js"></script>
+	<link rel="stylesheet" href="./leaflet/dist/L.Icon.Pulse.css" />
+    <link rel="stylesheet" href="./leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="./leaflet/src/leaflet-search.css" /> 
+    <link rel="stylesheet" href="./leafletstyle.css" />	
+	
+    <script charset="UTF-8" src="lod4leaflet.js"></script>
+
+ 
+	
+	<style>
+			body {
+				padding: 0;
+				margin: 0;
+		}
+		html, body, #map {
+			height: 100%;
+		}
+		
+		a:link { text-decoration:none; }
+		
+		
+	</style>
+	<style type="text/css">
+		
+	</style>
+	
+	
+	
+
+	
+</head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<body>
+
+	<div id="map"></div>
+	
+	
+	
+<script type="text/javascript"></script>
+<!-- <script src="./leaflet/dist/L.Icon.Pulse.js"></script>  // removing the comment activates icon pulses -->
+<script src="./leaflet/dist/leaflet.js"></script>
+<script src="./leaflet/src/leaflet-search.js"></script>		
+
+<script>
+// Initializing the map on center of Berlin
+var map = L.map('map').setView([52.500623108593, 13.376227531435], 2); 
+
+// Base layer
+var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 16,
+	attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+
+// Integrating the markers as a layer using data from the JS file
+var markers = new L.MarkerClusterGroup();
+        for (var i = 0; i < addressPoints.length; i++) {
+			var a = addressPoints[i];
+			var title = a[2]; // 2 points to data that is in second place in your data js-file (comma separated)
+			var name = a[3]
+			var marker = L.marker(new L.LatLng(a[0], a[1]), 
+				{
+				title: name
+			});
+			marker.bindPopup(title);
+			markers.addLayer(marker);
+		}
+	
+
+	map.addLayer(markers);
+    
+// Icon Pulse
+var pulsingIcon = L.icon.pulse({iconSize:[12,12],color:'red'});
+
+		var markerI = L.marker([52.51770,13.39158],{icon: pulsingIcon}).addTo(map);
+		markerI.bindPopup(title);
+		markers.addLayer(marker);
+
+// Search box	
+var controlSearch = new L.Control.Search({
+		position:'topleft',
+		layer: markers,
+		initial: false,
+		collapsed: false,
+		zoom: 18,
+		
+		
+});	
+	
+	
+	map.addControl( controlSearch ); 
+	
+// Controls the search parameters in the js file with your data
+	for(i in data) {
+		var title = data[i].title,	//value searched
+			loc = data[i].loc,		//position found
+			marker = new L.Marker(new L.latLng(loc), {title: title} );//see property searched
+		marker.bindPopup('title: '+ title );
+		markersLayer.addLayer(marker );
+	}
+
+
+</script>
+
+	
+</body>
+</html>

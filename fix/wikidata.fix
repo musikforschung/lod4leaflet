@@ -1,0 +1,15 @@
+#wikidata.fix
+
+wd_simple_claims()
+if any_match(claims.P625.0.value.latitude,'\d.*')
+   if any_match(claims.P625.0.value.longitude,'\d.*')
+      copy_field(title,qid)
+      copy_field(claims.P625.0.value.latitude,coords.0)
+      copy_field(claims.P625.0.value.longitude,coords.1)
+	  join_field(coords,"|")
+   end
+end
+
+sleep(500,MILLISECONDS)
+
+select exists(coords)
