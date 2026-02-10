@@ -43,7 +43,6 @@ coordinates
 * depictionLicense (string)
 * depictionLicenseURI (string, URI)
 
-
 # Author
 
 René Wallor, wallor at sim.spk-berlin.de
